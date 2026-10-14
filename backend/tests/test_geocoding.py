@@ -11,6 +11,7 @@ from django.core.cache import cache
 from django.test import SimpleTestCase
 
 from core.errors import LocationNotFound, ProviderUnavailable
+from core.http import _RETRY
 from core.geo import Place
 from providers import geocoding
 
@@ -76,6 +77,13 @@ class FallbackTests(SimpleTestCase):
             with self.assertRaises(LocationNotFound):
                 geocoding.resolve("nowhere at all")
 
+    def test_a_fallback_outage_reads_as_no_match_rather_than_an_outage(self):
+        with patch("providers.geocoding._candidates", return_value=[]), patch(
+            "providers.geocoding.photon.search", side_effect=ProviderUnavailable("photon", "timed out")
+        ):
+            with self.assertRaises(LocationNotFound):
+                geocoding.resolve("zzqqxx not a real place 12345")
+
     def test_blank_query_returns_no_results(self):
         self.assertEqual(geocoding.search("   "), [])
 
@@ -90,3 +98,9 @@ class CacheTests(SimpleTestCase):
             geocoding.resolve("springfield, il")
 
         self.assertEqual(candidates.call_count, 1)
+
+
+class RetryPolicyTests(SimpleTestCase):
+    def test_read_timeouts_are_not_retried(self):
+        self.assertEqual(_RETRY.read, 0)
+        self.assertGreater(_RETRY.connect, 0)

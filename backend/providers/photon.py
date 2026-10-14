@@ -31,7 +31,7 @@ def _label(properties: dict) -> str:
 
 
 def search(query: str, limit: int = 5) -> list[Place]:
-    payload = get_json(PROVIDER, f"{settings.PHOTON_URL}/api", params={"q": query, "limit": limit}, timeout=20.0)
+    payload = get_json(PROVIDER, f"{settings.PHOTON_URL}/api", params={"q": query, "limit": limit}, timeout=8.0)
 
     places: list[Place] = []
     for feature in payload.get("features", []):

@@ -96,7 +96,10 @@ def search(query: str, limit: int = 5) -> list[Place]:
         ]
 
     if not places:
-        places = photon.search(cleaned, limit)
+        try:
+            places = photon.search(cleaned, limit)
+        except ProviderError:
+            places = []
 
     if places:
         cache.set(key, places, CACHE_SECONDS)

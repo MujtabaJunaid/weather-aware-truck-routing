@@ -1,6 +1,6 @@
 """Shared HTTP session with retries, timeouts and a descriptive user agent.
-Every upstream call goes through this module so retry and timeout policy is set once and
-the public OSM-based services can attribute traffic to this application.
+Read timeouts are deliberately not retried: a slow upstream would otherwise multiply its
+timeout by the retry count and exceed the platform request limit before answering.
 """
 
 from __future__ import annotations
@@ -16,8 +16,11 @@ from .errors import ProviderUnavailable
 USER_AGENT = "weather-aware-truck-routing/1.0 (+https://github.com/MujtabaJunaid)"
 
 _RETRY = Retry(
-    total=3,
-    backoff_factor=0.6,
+    total=2,
+    connect=2,
+    read=0,
+    status=2,
+    backoff_factor=0.4,
     status_forcelist=(429, 500, 502, 503, 504),
     allowed_methods=frozenset({"GET", "POST"}),
     raise_on_status=False,
