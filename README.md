@@ -112,7 +112,9 @@ workers, and with a per-process cache two identical requests land on different w
 both miss. A file cache on the dyno's own disk is shared by every worker, costs nothing and
 needs no add-on.
 
-Result: ~6 s cold, and well under a second once warm. Because routes and forecast cells are cached,
+Result, measured server-side on the dyno: ~5 s cold and 1.0–1.7 s warm, against ~50 s before.
+The warm cost is reading roughly 130 cached forecast series back off disk, scoring them and
+serialising a 55 KB response. Because routes and forecast cells are cached,
 changing the checkpoint interval re-scores from cache without re-routing or re-fetching. Route
 geometry is simplified (Ramer–Douglas–Peucker) and polyline-encoded before transport, and the
 heatmap scrubber only swaps the weight on an existing GeoJSON source rather than refetching.
