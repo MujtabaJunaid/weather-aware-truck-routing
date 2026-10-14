@@ -107,7 +107,12 @@ shaped the current design:
   city queries in about 1 s and became the primary; Nominatim, at well under 1 s from the dyno,
   is now the fallback for street addresses.
 
-Result: ~10 s cold, and 0.2–0.4 s once warm. Because routes and forecast cells are cached,
+The cache is file-based rather than in-process on purpose: the dyno runs two gunicorn
+workers, and with a per-process cache two identical requests land on different workers and
+both miss. A file cache on the dyno's own disk is shared by every worker, costs nothing and
+needs no add-on.
+
+Result: ~6 s cold, and well under a second once warm. Because routes and forecast cells are cached,
 changing the checkpoint interval re-scores from cache without re-routing or re-fetching. Route
 geometry is simplified (Ramer–Douglas–Peucker) and polyline-encoded before transport, and the
 heatmap scrubber only swaps the weight on an existing GeoJSON source rather than refetching.

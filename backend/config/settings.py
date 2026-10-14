@@ -65,10 +65,10 @@ REST_FRAMEWORK = {
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "weather-aware-truck-routing",
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": os.environ.get("CACHE_DIR", str(BASE_DIR / ".cache")),
         "TIMEOUT": 900,
-        "OPTIONS": {"MAX_ENTRIES": 2000},
+        "OPTIONS": {"MAX_ENTRIES": 4000, "CULL_FREQUENCY": 4},
     }
 }
 
