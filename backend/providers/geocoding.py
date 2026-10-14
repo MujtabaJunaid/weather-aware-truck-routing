@@ -1,4 +1,4 @@
-"""Place lookup backed by the Open-Meteo geocoder, falling back to Photon for addresses.
+"""Place lookup backed by the Open-Meteo geocoder, falling back to Nominatim for addresses.
 A trailing region hint such as the "IL" in "Chicago, IL" is matched against the state or
 country of each candidate, which keeps same-named cities from resolving to the wrong state.
 """
@@ -13,7 +13,7 @@ from core.errors import LocationNotFound, ProviderError
 from core.geo import Place
 from core.http import get_json
 
-from . import photon
+from . import nominatim
 
 PROVIDER = "open-meteo-geocoding"
 CACHE_SECONDS = 86_400
@@ -97,7 +97,7 @@ def search(query: str, limit: int = 5) -> list[Place]:
 
     if not places:
         try:
-            places = photon.search(cleaned, limit)
+            places = nominatim.search(cleaned, limit)
         except ProviderError:
             places = []
 

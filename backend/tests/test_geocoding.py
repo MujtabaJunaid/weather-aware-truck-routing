@@ -1,4 +1,4 @@
-"""Tests for region-hint handling, caching and the Photon fallback in place lookup.
+"""Tests for region-hint handling, caching and the address fallback in place lookup.
 The hint logic is what keeps "Springfield, IL" from resolving to Springfield, Missouri, so
 each branch of it is pinned down with stubbed upstream payloads.
 """
@@ -53,33 +53,33 @@ class FallbackTests(SimpleTestCase):
     def setUp(self):
         cache.clear()
 
-    def test_photon_is_used_when_the_primary_returns_nothing(self):
+    def test_nominatim_is_used_when_the_primary_returns_nothing(self):
         address = Place("1600 Pennsylvania Avenue, Washington", 38.89, -77.03)
         with patch("providers.geocoding._candidates", return_value=[]), patch(
-            "providers.geocoding.photon.search", return_value=[address]
-        ) as photon_search:
+            "providers.geocoding.nominatim.search", return_value=[address]
+        ) as nominatim_search:
             place = geocoding.resolve("1600 Pennsylvania Avenue")
 
         self.assertEqual(place, address)
-        photon_search.assert_called_once()
+        nominatim_search.assert_called_once()
 
-    def test_photon_is_used_when_the_primary_fails(self):
+    def test_nominatim_is_used_when_the_primary_fails(self):
         address = Place("Somewhere", 1.0, 2.0)
         with patch("providers.geocoding._candidates", side_effect=ProviderUnavailable("x", "down")), patch(
-            "providers.geocoding.photon.search", return_value=[address]
+            "providers.geocoding.nominatim.search", return_value=[address]
         ):
             self.assertEqual(geocoding.resolve("anywhere"), address)
 
     def test_no_result_anywhere_raises_location_not_found(self):
         with patch("providers.geocoding._candidates", return_value=[]), patch(
-            "providers.geocoding.photon.search", return_value=[]
+            "providers.geocoding.nominatim.search", return_value=[]
         ):
             with self.assertRaises(LocationNotFound):
                 geocoding.resolve("nowhere at all")
 
     def test_a_fallback_outage_reads_as_no_match_rather_than_an_outage(self):
         with patch("providers.geocoding._candidates", return_value=[]), patch(
-            "providers.geocoding.photon.search", side_effect=ProviderUnavailable("photon", "timed out")
+            "providers.geocoding.nominatim.search", side_effect=ProviderUnavailable("nominatim", "timed out")
         ):
             with self.assertRaises(LocationNotFound):
                 geocoding.resolve("zzqqxx not a real place 12345")

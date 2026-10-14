@@ -81,13 +81,14 @@ credential and no quota account:
 |---|---|---|---|
 | Truck routing | [Valhalla](https://github.com/valhalla/valhalla) via the FOSSGIS public instance | MIT, OpenStreetMap data (ODbL) | none |
 | Forecast | [Open-Meteo](https://open-meteo.com) hourly forecast | AGPL-3.0, free for non-commercial use | none |
-| Geocoding | Open-Meteo geocoding, with [Photon](https://github.com/komoot/photon) as the address fallback | AGPL-3.0 / Apache-2.0 | none |
+| Geocoding | Open-Meteo geocoding, with [Nominatim](https://github.com/osm-search/Nominatim) as the address fallback | AGPL-3.0 / GPL-2.0 | none |
 | Basemap | [OpenFreeMap](https://openfreemap.org) + OpenMapTiles | BSD/CC-BY, OSM data | none |
 | Map renderer | [MapLibre GL JS](https://maplibre.org) | BSD-3-Clause | none |
 
 The only optional credential is `GROQ_API_KEY`, used solely for the narrated briefing. Public
-instances are used under fair-use terms; for production traffic you would self-host Valhalla
-and Photon and point `VALHALLA_URL` / `PHOTON_URL` at them.
+instances are used under fair-use terms, and calls to Nominatim are serialised to respect its
+one-request-per-second policy. For production traffic you would self-host Valhalla and
+Nominatim and point `VALHALLA_URL` / `NOMINATIM_URL` at them.
 
 ## Performance notes
 
@@ -101,8 +102,10 @@ shaped the current design:
   costs the same as a 50-mile one — 309 checkpoints still resolve to about 79 cells.
 - **It rejects heavy concurrency** with `429 Too many concurrent requests`, so requests are
   split into exactly `MAX_PARALLEL_REQUESTS` chunks and issued in a single wave.
-- **Photon answered in 7–12 s.** Open-Meteo's geocoder answers the same city queries in about
-  1 s, so it became the primary and Photon is now only the fallback for street addresses.
+- **The original geocoder was the slowest link.** Photon answered in 7–12 s locally and 31–37 s
+  from the dyno — past Heroku's 30 s request limit on its own. Open-Meteo's geocoder answers
+  city queries in about 1 s and became the primary; Nominatim, at well under 1 s from the dyno,
+  is now the fallback for street addresses.
 
 Result: ~10 s cold, and 0.2–0.4 s once warm. Because routes and forecast cells are cached,
 changing the checkpoint interval re-scores from cache without re-routing or re-fetching. Route
@@ -139,7 +142,7 @@ backend/
   providers/   one adapter per upstream service
   planning/    checkpoint sampling, corridor grid, orchestration, API
   core/        geometry, HTTP session, cache keys, error mapping
-  tests/       69 tests, no network access
+  tests/       71 tests, no network access
 frontend/src/
   api/         typed client and wire types
   lib/         geometry, risk palette, formatters
@@ -179,7 +182,7 @@ npm run dev
 | `WEATHER_SNAP_DEGREES` | `0.3` | forecast grid size; lower is more precise and slower |
 | `API_THROTTLE_RATE` | `60/min` | per-IP throttle protecting the free upstreams |
 | `GROQ_API_KEY` | empty | optional; enables the narrated briefing |
-| `VALHALLA_URL`, `PHOTON_URL`, `OPEN_METEO_URL`, `OPEN_METEO_GEOCODING_URL` | public instances | point at self-hosted instances |
+| `VALHALLA_URL`, `NOMINATIM_URL`, `OPEN_METEO_URL`, `OPEN_METEO_GEOCODING_URL` | public instances | point at self-hosted instances |
 
 ## Deployment
 
@@ -196,8 +199,8 @@ git subtree push --prefix backend heroku main
 - Forecast lookups are snapped to a ~0.3° grid, so a checkpoint's reading can come from up to
   roughly 15 miles away. Lower `WEATHER_SNAP_DEGREES` to trade latency for precision.
 - Departure must fall within the forecast window (12 hours back to 13 days ahead).
-- The public Valhalla and Photon instances carry no availability guarantee; outages surface as
-  a 503 with a readable message.
+- The public Valhalla and Nominatim instances carry no availability guarantee; outages surface
+  as a 503 with a readable message.
 - Forecasts are guidance. The driver remains responsible for the go/no-go decision.
 
 ## Licence

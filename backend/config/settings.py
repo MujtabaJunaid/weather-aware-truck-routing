@@ -73,7 +73,7 @@ CACHES = {
 }
 
 VALHALLA_URL = os.environ.get("VALHALLA_URL", "https://valhalla1.openstreetmap.de/route")
-PHOTON_URL = os.environ.get("PHOTON_URL", "https://photon.komoot.io")
+NOMINATIM_URL = os.environ.get("NOMINATIM_URL", "https://nominatim.openstreetmap.org/search")
 OPEN_METEO_URL = os.environ.get("OPEN_METEO_URL", "https://api.open-meteo.com/v1/forecast")
 OPEN_METEO_GEOCODING_URL = os.environ.get(
     "OPEN_METEO_GEOCODING_URL", "https://geocoding-api.open-meteo.com/v1/search"

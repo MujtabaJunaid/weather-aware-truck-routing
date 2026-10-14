@@ -137,7 +137,7 @@ export default function App() {
 
       <footer className="mx-auto max-w-[1600px] px-4 pb-6 text-[11px] leading-relaxed text-slate-400">
         Routing by Valhalla (FOSSGIS) on OpenStreetMap data · forecasts and geocoding by Open-Meteo ·
-        address fallback by Photon · basemap by OpenFreeMap. Forecasts are guidance only; the driver
+        address fallback by Nominatim · basemap by OpenFreeMap. Forecasts are guidance only; the driver
         remains responsible for the go or no-go decision.
       </footer>
     </div>
